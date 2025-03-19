@@ -1,27 +1,27 @@
-# Use a specific Node.js Alpine base image for consistency
+# Use Node.js Alpine base image
 FROM node:20-alpine
 
-# Create and set the working directory inside the container
+# Set working directory
 WORKDIR /app
 
-# Remove npm cache manually to avoid corruption
+# Remove npm cache for a clean state
 RUN rm -rf /root/.npm
 
-# Copy package.json and package-lock.json in one step to leverage Docker layer caching
+# Copy package files and install dependencies
 COPY package*.json ./
+RUN npm cache clean --force
 
-# Install npm stable version and install dependencies with better conflict handling
-RUN npm install -g npm@9.8.1
-RUN npm install --legacy-peer-deps --force
+# ✅ Use npm ci for clean, reproducible builds (better for CI/CD)
+RUN npm ci --legacy-peer-deps --force
 
-# Copy the entire codebase to the working directory
+# ✅ Install npm locally instead of globally (avoids permission issues)
+RUN npm install npm@9.8.1 --legacy-peer-deps --force
+
+# Copy the rest of the app files
 COPY . .
 
-# Expose the port your app runs on (replace with the actual port)
+# Expose the port
 EXPOSE 3000
 
-# Health check to ensure the container is running properly
-HEALTHCHECK CMD curl --fail http://localhost:3000 || exit 1
-
-# Define the command to start your application
+# Start the app
 CMD ["npm", "start"]
